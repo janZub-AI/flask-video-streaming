@@ -4,8 +4,12 @@ import os
 from flask import Flask, render_template, Response
 import imagiz
 import cv2
+from EmotionDetection.face_detection import FaceClass
 
 app = Flask(__name__)
+server=imagiz.TCP_Server(8095)
+server.start()
+face_class = FaceClass()
 
 @app.route('/')
 def index():
@@ -29,14 +33,13 @@ def gen():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 def gen_streamed():
-    server=imagiz.TCP_Server(9990)
-    server.start()
     while True:
         try:
             message=server.receive()
-            if not message.image is None:
-                frame = cv2.imdecode(message.image,1)
-                img_str = cv2.imencode('.jpg', frame)[1].tostring()
+            if not message.image is None:     
+                frame = cv2.imdecode(message.image,cv2.IMREAD_UNCHANGED)
+                with_faces = face_class.find_faces(frame)
+                img_str = cv2.imencode('.jpg', with_faces)[1].tostring()
                 yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + img_str + b'\r\n')
         except:
