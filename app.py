@@ -32,12 +32,17 @@ def gen_streamed():
     server=imagiz.TCP_Server(9990)
     server.start()
     while True:
-        message=server.receive()
-        if not message.image is None:
-            frame = cv2.imdecode(message.image,1)
-            img_str = cv2.imencode('.jpg', frame)[1].tostring()
-            yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + img_str + b'\r\n')
+        try:
+            message=server.receive()
+            if not message.image is None:
+                frame = cv2.imdecode(message.image,1)
+                img_str = cv2.imencode('.jpg', frame)[1].tostring()
+                yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + img_str + b'\r\n')
+        except:
+            pass
+
+
 
 @app.route('/video_feed')
 def video_feed():
